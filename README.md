@@ -29,7 +29,7 @@ The installer adds `gir1.2-gtklayershell-0.1` with `sudo apt` if it is missing, 
 `pibeachball.py` is a small Python daemon with no dependencies beyond what Raspberry Pi OS already ships, plus the layer-shell bindings.
 
 - Apps started from desktop icons (and from file manager windows) are children of `pcmanfm`. Apps started from the menu are launched through GLib, which tags them with `GIO_LAUNCHED_DESKTOP_FILE_PID`. The daemon polls `/proc` five times a second for either.
-- If the app has no window after 0.3 seconds, a transparent overlay covers each screen and sets the cursor to the rendered beachball frames.
+- If the app has no window after 0.3 seconds, a transparent overlay covers each screen, hides the pointer and draws the spinning beachball under it. The beachball is drawn by the overlay rather than set as an animated cursor, since the Pi 5 hardware cursor only ever shows the first frame of an animated cursor.
 - New windows are picked up through the `wlr-foreign-toplevel` Wayland protocol, the same one the taskbar uses. The beachball goes away when a new window maps, when every process belonging to the app has exited, when you click, or after three minutes.
 
 A click while the beachball is showing dismisses it and does not reach the window underneath.

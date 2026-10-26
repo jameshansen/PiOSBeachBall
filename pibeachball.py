@@ -3,8 +3,9 @@
 
 The desktop (pcmanfm, which also runs the file manager windows) starts apps as its own children. The panel menu
 starts them through GLib, which tags each app with GIO_LAUNCHED_DESKTOP_FILE_PID=<its pid> and orphans it. When
-either appears, a transparent overlay turns the cursor into the beachball until a new window maps, all of the
-app's processes exit, the user clicks or TIMEOUT passes.
+either appears, a transparent overlay hides the cursor and spins the beachball under the pointer until a new
+window maps, all of the app's processes exit, the user clicks or TIMEOUT passes. The overlay draws the beachball
+itself because the Pi 5 cursor plane only ever shows the first frame of an animated cursor.
 
 Run with --selftest to launch `sleep 1` both ways and check the beachball comes and goes with it.
 """
@@ -111,9 +112,7 @@ class Toplevels:
 
 class BeachBall:
     def __init__(self):
-        disp = Gdk.Display.get_default()
-        self.cursors = [Gdk.Cursor.new_from_pixbuf(disp, GdkPixbuf.Pixbuf.new_from_file_at_size(f, SIZE, SIZE), SIZE // 2, SIZE // 2)
-                        for f in FRAMES]
+        self.frames = [GdkPixbuf.Pixbuf.new_from_file_at_size(f, SIZE, SIZE) for f in FRAMES]
         css = Gtk.CssProvider()
         css.load_from_data(b"window { background: transparent; }")
         Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
@@ -140,7 +139,8 @@ class BeachBall:
                 for r, (_, members) in self.launches.items():
                     if st[2] in members or root == r:
                         members.add(pid)
-        self.fresh, self.seen = pids - self.seen, pids
+        # A launch already picked up is not rechecked, or a window opening before the next poll would restart it.
+        self.fresh, self.seen = pids - self.seen - self.launches.keys(), pids
 
     def poll(self):
         self.scan()
@@ -168,6 +168,7 @@ class BeachBall:
 
     def show(self):
         disp = Gdk.Display.get_default()
+        blank = Gdk.Cursor.new_for_display(disp, Gdk.CursorType.BLANK_CURSOR)
         for i in range(disp.get_n_monitors()):
             w = Gtk.Window()
             GtkLayerShell.init_for_window(w)
@@ -178,24 +179,37 @@ class BeachBall:
             for edge in (GtkLayerShell.Edge.TOP, GtkLayerShell.Edge.BOTTOM, GtkLayerShell.Edge.LEFT, GtkLayerShell.Edge.RIGHT):
                 GtkLayerShell.set_anchor(w, edge, True)
             w.set_visual(w.get_screen().get_rgba_visual())
-            w.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.SCROLL_MASK)
+            ball = Gtk.Image.new_from_pixbuf(self.frames[self.frame])
+            ball.set_no_show_all(True)  # shown once the pointer is over this monitor
+            fixed = Gtk.Fixed()
+            fixed.put(ball, 0, 0)
+            w.add(fixed)
+            w.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.POINTER_MOTION_MASK
+                         | Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
             w.connect("button-press-event", self.done)
             w.connect("scroll-event", self.done)
-            w.show()
-            self.wins.append(w)
-        self.tick()
+            w.connect("enter-notify-event", self.follow, fixed, ball)
+            w.connect("motion-notify-event", self.follow, fixed, ball)
+            w.connect("leave-notify-event", lambda *_, b=ball: b.hide())
+            w.show_all()
+            w.get_window().set_cursor(blank)
+            self.wins.append((w, ball))
         self.timer = GLib.timeout_add(FRAME_MS, self.tick)
 
+    def follow(self, _w, ev, fixed, ball):
+        fixed.move(ball, int(ev.x) - SIZE // 2, int(ev.y) - SIZE // 2)
+        ball.show()
+
     def tick(self):
-        self.frame = (self.frame + 1) % len(self.cursors)
-        for w in self.wins:
-            w.get_window().set_cursor(self.cursors[self.frame])
+        self.frame = (self.frame + 1) % len(self.frames)
+        for _, ball in self.wins:
+            ball.set_from_pixbuf(self.frames[self.frame])
         return True
 
     def hide(self):
         if self.wins:
             GLib.source_remove(self.timer)
-            for w in self.wins:
+            for w, _ in self.wins:
                 w.destroy()
             self.wins = []
 
