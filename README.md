@@ -54,6 +54,18 @@ To watch what the daemon detects, stop the autostarted copy and run it in a term
 pkill -f pibeachball.py; python3 ~/.local/share/pibeachball/pibeachball.py
 ```
 
+## Desktop icons sticking to the pointer
+
+On Raspberry Pi OS Trixie a desktop icon can get stuck to the pointer after a drag, and it stays there until the desktop restarts. This comes from pcmanfm and happens with or without the beachball installed. Holding the mouse button on an icon for about half a second counts as a long press, which opens the icon's menu just as the drag starts, and the drag never finishes.
+
+Limiting the long press to touchscreens stops it. This adds `gestures_touch_only=1` to `~/.config/libfm/libfm.conf` and restarts the desktop icons:
+
+```bash
+sed -i '/^\[config\]/a gestures_touch_only=1' ~/.config/libfm/libfm.conf && pkill pcmanfm
+```
+
+The desktop starts pcmanfm again on its own. Restarting pcmanfm also frees an icon that is already stuck, and right-clicking still opens the menu.
+
 ## The beachball
 
 `blender/make_beachball.py` builds the model and renders 36 frames at 128 px into `blender/frames`, one full clockwise turn in 10 degree steps, so the spin loops seamlessly at about 1.2 seconds per turn. `blender/beachball.blend` holds the scene. To re-render:
