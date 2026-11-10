@@ -110,7 +110,7 @@ PiOSBeachBall is one of three projects for the Raspberry Pi. One is a utility fo
 
 ## AI use disclosure
 
-PiOSBeachBall was built using [Claude Code](https://claude.com/claude-code) with Claude Fable 5.2.
+PiOSBeachBall was built using [Claude Code](https://claude.com/claude-code) with Claude Opus 5.5 and Claude Fable 5.2.
 
 ## Licence
 
