@@ -12,21 +12,23 @@ Raspberry Pi OS gives no sign that an app is on its way. A big program can take 
 
 ## Features
 
-- **A proper installer.** A welcome screen, a progress bar and a finished screen, built from the dialogs Raspberry Pi OS already has. No terminal needed.
+- **A proper installer.** A welcome screen, a progress bar, one optional fix and a finished screen, built from the dialogs Raspberry Pi OS already has. No terminal needed.
 - **Works from the menu and the desktop.** Apps started from the main menu, a desktop icon or a file manager window all get the beachball.
 - **Spins on the Pi 5 and Pi 500.** The hardware cursor on those models holds the first frame of an animated cursor. The beachball is drawn over the screen instead, so it turns on every model.
 - **Gets out of the way.** It goes when the app's window opens, when the app exits, when you click, or after three minutes.
 - **Light.** It costs about half a percent of one core on a Pi 400 while idle.
 - **Starts at login.** It is there every time the desktop starts, for the user who installed it.
+- **Fixes icons that stick to the pointer.** The installer offers to change the desktop setting behind a Raspberry Pi OS glitch, where a dragged desktop icon stays stuck to the pointer. Skip it if you would rather not.
 - **Reinstall or remove.** Run the installer again.
 
-![The installer's welcome and finished screens](docs/installer.png)
+![The installer's welcome, icon fix and finished screens](docs/installer.png)
 
 ## Install
 
 1. Download `PiOSBeachBall.tar.gz` from the [latest release](../../releases/latest) and extract it. In the file manager, right-click the file and choose Extract Here.
 2. Open the `PiOSBeachBall` folder, double-click `install.sh` and choose Execute.
-3. Choose **Install**, then open any app to see the beachball.
+3. Choose **Install**. The installer then offers to stop desktop icons sticking to the pointer; choose **Fix It** or **Skip**.
+4. Open any app to see the beachball.
 
 From a terminal the same thing is:
 
@@ -72,7 +74,9 @@ pkill -f pibeachball.py; python3 ~/.local/share/pibeachball/pibeachball.py
 
 On Raspberry Pi OS Trixie a desktop icon can get stuck to the pointer after a drag, and it stays there until the desktop restarts. This comes from pcmanfm and happens with or without the beachball installed. Holding the mouse button on an icon for about half a second counts as a long press, which opens the icon's menu just as the drag starts, and the drag never finishes.
 
-Limiting the long press to touchscreens stops it. This adds `gestures_touch_only=1` to `~/.config/libfm/libfm.conf` and restarts the desktop icons:
+Limiting the long press to touchscreens stops it. The installer offers this as its last step, and skips the question on a Pi that already has the setting. Removing the beachball leaves the setting in place.
+
+To make the change by hand, this adds `gestures_touch_only=1` to `~/.config/libfm/libfm.conf` and restarts the desktop icons:
 
 ```bash
 sed -i '/^\[config\]/a gestures_touch_only=1' ~/.config/libfm/libfm.conf && pkill pcmanfm

@@ -15,6 +15,7 @@ ICON="$FRAMES/beachball_00.png"
 PACKAGE=gir1.2-gtklayershell-0.1   # lets the beachball draw over every window
 DEST="$HOME/.local/share/pibeachball"
 AUTOSTART="${XDG_CONFIG_HOME:-$HOME/.config}/autostart/pibeachball.desktop"
+LIBFM="${XDG_CONFIG_HOME:-$HOME/.config}/libfm/libfm.conf"   # the desktop icons' settings
 # The defaults let the installer run over SSH and still reach the Pi's desktop.
 export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 
@@ -74,6 +75,21 @@ EOF
   setsid python3 "$DEST/pibeachball.py" >/dev/null 2>&1 &
 )
 
+# Limits the desktop's long press to touchscreens. With a mouse, a long press opens an
+# icon's menu just as a drag starts, and the icon stays stuck to the pointer.
+fix_icons() (
+  set -e
+  mkdir -p "$(dirname "$LIBFM")"
+  touch "$LIBFM"
+  sed -i '/^gestures_touch_only=/d' "$LIBFM"
+  if grep -q '^\[config\]' "$LIBFM"; then
+    sed -i '/^\[config\]/a gestures_touch_only=1' "$LIBFM"
+  else
+    printf '[config]\ngestures_touch_only=1\n' >>"$LIBFM"
+  fi
+  pkill pcmanfm || true   # the desktop starts it again with the new setting
+)
+
 [ -f "$PROGRAM" ] && [ -f "$ICON" ] ||
   fail "A file that belongs next to install.sh is missing. Download the whole package again."
 
@@ -101,4 +117,13 @@ $(tail -5 "$log")"
 fi
 rm -f "$log"
 
-note "<b>The beachball is installed and running.</b>\n\nOpen any app from the menu or the desktop to see it. To remove it, run this installer again."
+fixed=""
+if ! grep -q '^gestures_touch_only=1' "$LIBFM" 2>/dev/null; then
+  if page --text="<b>Stop desktop icons sticking to the pointer?</b>\n\nOn Raspberry Pi OS a desktop icon can get stuck to the pointer after you drag it, and it stays there until the desktop restarts. This happens with or without the beachball. The installer can fix it by changing one desktop setting, so that holding the mouse button on an icon no longer opens its menu. Right-clicking still does.\n\nThe desktop icons disappear for a moment while the change is made." \
+    --cancel-label="Skip" --ok-label="Fix It"; then
+    fix_icons 2>/dev/null || fail "The installer could not change $LIBFM. The beachball itself is installed and running."
+    fixed=" Desktop icons will no longer stick to the pointer."
+  fi
+fi
+
+note "<b>The beachball is installed and running.</b>\n\nOpen any app from the menu or the desktop to see it.$fixed To remove it, run this installer again."
