@@ -6,6 +6,8 @@
 
 <p align="center"><a href="../../releases/latest"><b>Download for Raspberry Pi OS</b></a></p>
 
+<p align="center">Discord: <a href="https://discord.gg/88VzuWSYUc">https://discord.gg/88VzuWSYUc</a></p>
+
 ## What it does
 
 Raspberry Pi OS gives no sign that an app is on its way. A big program can take many seconds to open from an SD card, and until its window appears the desktop looks as if the click never landed. PiOSBeachBall fills that gap. When an app started from the menu or a desktop icon has no window yet, the pointer becomes a spinning beachball until the window appears or the app exits.
@@ -100,13 +102,14 @@ git archive --format=tar.gz --prefix=PiOSBeachBall/ -o PiOSBeachBall.tar.gz HEAD
 
 ## Pi Projects
 
-PiOSBeachBall is one of three projects for the Raspberry Pi. One is a utility for the desktop, and two bring favourite old freeware games to the Pi with the same kind of installer.
+PiOSBeachBall is one of four projects for the Raspberry Pi. One is a utility for the desktop, and three bring favourite old free games to the Pi with the same kind of installer.
 
 | Project | What it is |
 | --- | --- |
 | **PiOSBeachBall** | A spinning beachball pointer that shows when an app is loading. |
 | [PiKnytt](https://github.com/jameshansen/PiKnytt) | Knytt, the 2006 exploration platformer by Nifflas, installed and ready to play. |
 | [PiKlassOf99](https://github.com/jameshansen/PiKlassOf99) | Klass of 99, Richard Jordan's Skool Daze remake, installed and ready to play. |
+| [PiPakoon](https://github.com/jameshansen/PiPakoon) | Pakoon 0, 1 and 2, Mikko Oksalahti's driving games, built for the Pi with a launcher to pick between them. |
 
 ## AI use disclosure
 
